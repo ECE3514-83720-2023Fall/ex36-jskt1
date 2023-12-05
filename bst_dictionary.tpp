@@ -84,9 +84,35 @@ template <typename KeyType, typename ValueType>
 void BSTDictionary<KeyType, ValueType>::clear()
 {
     std::stack<Node<KeyType, ValueType> *> s;
-    s.push(root);
+    //s.push(root);
     
     // TODO -- implement clear
+    Node<KeyType, ValueType>* current = root;
+
+    // Temporary node for helping in deletions
+    Node<KeyType, ValueType>* lastNodeVisited = nullptr;
+
+    while (!s.empty() || current != nullptr) {
+        if (current != nullptr) {
+            s.push(current);
+            current = current->left;
+        }
+        else {
+            Node<KeyType, ValueType>* peekNode = s.top();
+            // If right child exists and traversing node from left child, then move right
+            if (peekNode->right != nullptr && lastNodeVisited != peekNode->right) {
+                current = peekNode->right;
+            }
+            else {
+                s.pop();
+                delete peekNode;
+                lastNodeVisited = peekNode;
+            }
+        }
+    }
+
+    root = nullptr;
+    m_size = 0;
  
 }
 
@@ -112,12 +138,27 @@ void BSTDictionary<KeyType, ValueType>::add(const KeyType &key,
     Node<KeyType, ValueType> *curr_parent;
     if (!isEmpty()) {
         search(key, curr, curr_parent);
-        if (curr->key == key)
+        if (curr != nullptr && curr->key == key) {
             throw std::logic_error("Duplicate key in add");
+        }
+
+        Node<KeyType, ValueType>* newNode = new Node<KeyType, ValueType>{ item, key, nullptr, nullptr };
+
+        if (curr_parent == nullptr) {
+            root = newNode;
+        }
+        else if (key < curr_parent->key) {
+            curr_parent->left = newNode;
+        }
+        else {
+            curr_parent->right = newNode;
+        }
     }
-    
-    // TODO -- implement add
- 
+    else {
+        root = new Node<KeyType, ValueType>{ item, key, nullptr, nullptr };
+    }
+
+    m_size++;
 }
 
 template <typename KeyType, typename ValueType>
@@ -224,7 +265,10 @@ void BSTDictionary<KeyType, ValueType>::inorder(
     in = curr->right; // move right once
     
     // TODO -- implement inorder
-    
+    while (in->left != nullptr) {
+        parent = in;
+        in = in->left;
+    }
 }
 
 template <typename KeyType, typename ValueType>
@@ -242,5 +286,15 @@ void BSTDictionary<KeyType, ValueType>::search(
     // want to do a search of the tree
     // return the node that has the key and a pointer to its parent
     // else where the node would go in the BST
+
+    while (curr != nullptr && curr->key != key) {
+        parent = curr;
+        if (key < curr->key) {
+            curr = curr->left;
+        }
+        else {
+            curr = curr->right;
+        }
+    }
     
 }
